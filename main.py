@@ -232,8 +232,7 @@ def task_distribution(task_list, data_base_project_manager):
                 if task['Notification'] == True:
                     message = "Пользователь с ID {user['ID']} должен выполнить задачу и уже оповещен"
                 else:
-                    print(
-                        f"Пользователь с ID {user['ID']} должен выполнить задачу и ему необходимо отправить уведомление")
+                    message = "Пользователь с ID {user['ID']} должен выполнить задачу и ему необходимо отправить уведомление"
                 break
     return
 
