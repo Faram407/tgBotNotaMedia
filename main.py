@@ -1,49 +1,94 @@
-# This is a sample Python script.
-
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
-
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
-
+import telebot
 import sqlite3
-from datetime import datetime, timedelta
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 import pandas as pd
+import os
 
-# Создание БД
-conn = sqlite3.connect('tgBot.db')
-cursor = conn.cursor()
-cursor.execute('''CREATE TABLE IF NOT EXISTS notifies (
-                    ID INTEGER PRIMARY KEY AUTOINCREMENT,
-                    ticket_Id TEXT,
-                    data_perevoda_na_3LTP TEXT,
-                    data_vzyatiya_v_rabotu TEXT,
-                    data_pereotkrytiya TEXT,
-                    krayniy_srok TEXT,
-                    ssylka_na_obrashcheniye TEXT,
-                    sostoyaniye_ASUOP TEXT,
-                    sostoyaniye_BITRIKS TEXT,
-                    otvetstvenny TEXT,
-                    kontakt_polzovatelya TEXT,
-                    soderzhaniye_obrashcheniya TEXT,
-                    kommentariy_ASUOP TEXT,
-                    servis TEXT,
-                    prioritet TEXT
-                )''')
+# Инициализация бота
+bot = telebot.TeleBot(BotKey)
 
-# Бот
+DB_FILE = 'database.sql'
+
+# Исправленный ключ бота
+BotKey = "7160129906:AAHBQbCiCtuqeTeCHjzWFnaI7OKbsqkwo8k"  # Замените на ваш ключ бота
+
+# Проверка существования базы данных
+if not os.path.exists(DB_FILE):
+    conn = sqlite3.connect(DB_FILE)
+    cur = conn.cursor()
+
+    # Создание таблицы
+    cur.execute('CREATE TABLE IF NOT EXISTS Helpdesk_ticket ('
+                'id INTEGER PRIMARY KEY AUTOINCREMENT,'
+                'Number_ticket VARCHAR(11),'
+                'Date_of_handover VARCHAR(11),'
+                'Date_of_commencement_of_employment VARCHAR(11),'
+                'Reopening_date VARCHAR(11),'
+                'Deadline VARCHAR(11),'
+                'URL VARCHAR(200),'
+                'Status_ASUOP VARCHAR(50),'
+                'Status_BITRIX VARCHAR(50),'
+                'Responsible_for_this_task VARCHAR(50),'
+                'User_contact VARCHAR(200),'
+                'Subject_of_the_ticket VARCHAR(1000),'
+                'Comment VARCHAR(500),'
+                'Service VARCHAR(50),'
+                'Priority VARCHAR(50)'
+                ')')
+
+    conn.commit()
+    cur.close()
+    conn.close()
 
 
-# Настройка бота и добавление обработчиков
-updater = Updater('7160129906:AAHBQbCiCtuqeTeCHjzWFnaI7OKbsqkwo8k', use_context=True)
-dispatcher = updater.dispatcher
+# Обработчик команды "start"
+@bot.message_handler(commands=['start'])
+def start(message):
+    bot.send_message(message.chat.id, 'Привет, сейчас загрузим обращения!')
+    bot.register_next_step_handler(message, handle_document)
+#test
+# Обработчик документов
+def handle_document(message):
+    if message.document is not None and message.document.file_name.endswith('.xlsx'):
+        file_info = bot.get_file(message.document.file_id)
+        downloaded_file = bot.download_file(file_info.file_path)
 
-dispatcher.add_handler(CommandHandler('upload_list', upload_list))
-dispatcher.add_handler(CommandHandler('download_list', download_list))
-dispatcher.add_handler(CommandHandler('check_deadlines', check_deadlines_command))
+        with open('data.xlsx', 'wb') as new_file:
+            new_file.write(downloaded_file)
 
-bot = telebot.TeleBot('7160129906:AAHBQbCiCtuqeTeCHjzWFnaI7OKbsqkwo8k')
+        df = pd.read_excel('data.xlsx')
+
+        conn = sqlite3.connect(DB_FILE)
+
+        # Сохранение данных из Excel в базу данных
+        df.to_sql('Helpdesk_ticket', conn, if_exists='replace', index=False)
+
+        conn.commit()
+        conn.close()
+
+        bot.send_message(message.chat.id, 'Данные успешно загружены и сохранены в базе данных!')
+    else:
+        bot.send_message(message.chat.id, 'Пожалуйста, отправьте файл в формате XLSX.')
+
+# Обработчик команды "query"
+@bot.message_handler(commands=['query'])
+def handle_query(message):
+    conn = sqlite3.connect(DB_FILE)
+    cur = conn.cursor()
+
+    cur.execute("SELECT * FROM Helpdesk_ticket")
+    rows = cur.fetchall()
+
+    if rows:
+        for row in rows:
+            bot.send_message(message.chat.id, str(row))
+    else:
+        bot.send_message(message.chat.id, 'Нет данных в базе!')
+
+    cur.close()
+    conn.close()
+
+# Запуск обработки сообщений бота
+bot.polling(none_stop=True)
 
 
 @bot.message_handler(func=lambda message: message.text.lower() == 'напомни')
