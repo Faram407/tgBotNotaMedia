@@ -221,3 +221,21 @@ def check_deadlines_command(update, context):
     # Проверяем крайние сроки обращений
     check_deadlines()
 
+def get_notification():
+    pass
+
+def task_distribution(task_list, data_base_project_manager):
+    notification = get_notification()
+    for task in task_list:
+        for user in data_base_project_manager:
+            if task['RESPONSIBLE_ID'] == user['ID']:
+                if task['Notification'] == True:
+                    message = "Пользователь с ID {user['ID']} должен выполнить задачу и уже оповещен"
+                else:
+                    print(
+                        f"Пользователь с ID {user['ID']} должен выполнить задачу и ему необходимо отправить уведомление")
+                break
+    return
+
+def bot_send_message(message):
+    pass
