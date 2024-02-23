@@ -11,14 +11,12 @@ from datetime import datetime, timedelta
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 import pandas as pd
 
-# Подключение к базе данных SQLite
-conn = sqlite3.connect('obrashcheniya.db')
+# Создание БД
+conn = sqlite3.connect('tgBot.db')
 cursor = conn.cursor()
-
-# Создание таблицы с полями
-cursor.execute('''CREATE TABLE IF NOT EXISTS obrazheniya (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    nomer_obrashcheniya TEXT,
+cursor.execute('''CREATE TABLE IF NOT EXISTS notifies (
+                    ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ticket_Id TEXT,
                     data_perevoda_na_3LTP TEXT,
                     data_vzyatiya_v_rabotu TEXT,
                     data_pereotkrytiya TEXT,
@@ -33,6 +31,59 @@ cursor.execute('''CREATE TABLE IF NOT EXISTS obrazheniya (
                     servis TEXT,
                     prioritet TEXT
                 )''')
+
+# Бот
+
+
+# Настройка бота и добавление обработчиков
+updater = Updater('7160129906:AAHBQbCiCtuqeTeCHjzWFnaI7OKbsqkwo8k', use_context=True)
+dispatcher = updater.dispatcher
+
+dispatcher.add_handler(CommandHandler('upload_list', upload_list))
+dispatcher.add_handler(CommandHandler('download_list', download_list))
+dispatcher.add_handler(CommandHandler('check_deadlines', check_deadlines_command))
+
+bot = telebot.TeleBot('7160129906:AAHBQbCiCtuqeTeCHjzWFnaI7OKbsqkwo8k')
+
+
+@bot.message_handler(func=lambda message: message.text.lower() == 'напомни')
+def handle_remind(message):
+    bot.send_message(message.chat.id, 'Хорошо, напомню через 30 секунд...')
+    time.sleep(30)  # Делаем паузу в 30 секунд
+    bot.send_message(message.chat.id, 'Время напомнить тебе что-то!')
+
+
+# не забыть включить, чтобы он заработал без остановки (если он вообще заработает, после 6 часов труда)
+# bot.polling(none_stop=True)
+
+
+# Запуск Telegram бота
+updater.start_polling()
+updater.idle()
+
+#Вызвать битру
+
+# Достать из excel
+# продумать структуру данных на выходе
+def get():
+    return
+
+def logic():
+    return
+
+def send():
+    return
+
+
+
+
+
+# Подключение к базе данных SQLite
+conn = sqlite3.connect('obrashcheniya.db')
+cursor = conn.cursor()
+
+# Создание таблицы с полями
+
 
 
 # Функция для автоматического вычисления дат
@@ -170,29 +221,3 @@ def check_deadlines_command(update, context):
     # Проверяем крайние сроки обращений
     check_deadlines()
 
-
-# Настройка бота и добавление обработчиков
-updater = Updater('7160129906:AAHBQbCiCtuqeTeCHjzWFnaI7OKbsqkwo8k', use_context=True)
-dispatcher = updater.dispatcher
-
-dispatcher.add_handler(CommandHandler('upload_list', upload_list))
-dispatcher.add_handler(CommandHandler('download_list', download_list))
-dispatcher.add_handler(CommandHandler('check_deadlines', check_deadlines_command))
-
-bot = telebot.TeleBot('7160129906:AAHBQbCiCtuqeTeCHjzWFnaI7OKbsqkwo8k')
-
-
-@bot.message_handler(func=lambda message: message.text.lower() == 'напомни')
-def handle_remind(message):
-    bot.send_message(message.chat.id, 'Хорошо, напомню через 30 секунд...')
-    time.sleep(30)  # Делаем паузу в 30 секунд
-    bot.send_message(message.chat.id, 'Время напомнить тебе что-то!')
-
-
-# не забыть включить, чтобы он заработал без остановки (если он вообще заработает, после 6 часов труда)
-# bot.polling(none_stop=True)
-
-
-# Запуск Telegram бота
-updater.start_polling()
-updater.idle()
