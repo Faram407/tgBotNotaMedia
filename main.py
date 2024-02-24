@@ -2,14 +2,23 @@ import telebot
 import sqlite3
 import pandas as pd
 import os
+import random # Для тестов, Денис
+
+data_base_project_manager = [{"ID": 4805, "ProjectName": "@nastasia_project"}, # Данные по Проджект менеджерам
+                             {"ID": 4609, "ProjectName": "@anatoliyavd"},
+                             {"ID": 4368, "ProjectName": "@avetiss"},
+                             {"ID": 5641, "ProjectName": "@exxxlight"}
+                             ]
+
+
+BotKey = "7160129906:AAHBQbCiCtuqeTeCHjzWFnaI7OKbsqkwo8k"  # Замените на ваш ключ бота
 
 # Инициализация бота
 bot = telebot.TeleBot(BotKey)
 
 DB_FILE = 'database.sql'
 
-# Исправленный ключ бота
-BotKey = "7160129906:AAHBQbCiCtuqeTeCHjzWFnaI7OKbsqkwo8k"  # Замените на ваш ключ бота
+
 
 # Проверка существования базы данных
 if not os.path.exists(DB_FILE):
@@ -38,6 +47,8 @@ if not os.path.exists(DB_FILE):
     conn.commit()
     cur.close()
     conn.close()
+
+
 
 
 # Обработчик команды "start"
@@ -80,12 +91,57 @@ def handle_query(message):
 
     if rows:
         for row in rows:
-            bot.send_message(message.chat.id, str(row))
+            row_task = dict_create_from_list(list(row))
+            bot.send_message(message.chat.id, row_task)
+
+
     else:
         bot.send_message(message.chat.id, 'Нет данных в базе!')
 
     cur.close()
     conn.close()
+
+ # Квартыч
+
+def append_Notification_and_RESPONSIBLE(row):     # ДЛЯ ТЕСТА Добавляем в список 2 поля , Responsible_ID и Notification
+    responsible_ID_list = [4805, 4609, 4368, 4368]
+    notification_list = [True, False]
+    row.append(random.choice(responsible_ID_list))
+    row.append(random.choice(notification_list))
+    return row
+
+def dict_create_from_list(row):                              # Преобразуем список в словарь
+    row = append_Notification_and_RESPONSIBLE(row)
+    keys = ["task_url", "task_number","date_start", "date_take", "objective","status", "applicant_name", "date,end", "RESPONSIBLE_ID", "Notification"]
+    task_dictionary = dict(zip(keys, row))
+    return task_distribution(task_dictionary, data_base_project_manager)
+
+def get_notification(task_dictionary):            # Смотрим Отправляли ли мы уже сообщение.
+    if task_dictionary["Notification"] == True:
+        return True
+    else:
+        return False
+
+
+def task_distribution(task_dictionary, data_base_project_manager): # Проверяем ответственного по задаче, Формируем сообщение.
+
+    for user in data_base_project_manager:
+
+        if task_dictionary["RESPONSIBLE_ID"] == user["ID"]:
+            if get_notification(task_dictionary) == True:
+                message_for_project = user['ProjectName'] + " уже оповещен по задаче " + task_dictionary[
+                    "task_number"]
+                break
+            else:
+
+                message_for_project = user[
+                    'ProjectName'] + " прошу взять задачу " + \
+                          task_dictionary["task_number"] + " в работу \n" + task_dictionary["task_url"]
+            break
+    return message_for_project
+
+ # Квартыч
+
 
 # Запуск обработки сообщений бота
 bot.polling(none_stop=True)
@@ -110,16 +166,13 @@ updater.idle()
 
 # Достать из excel
 # продумать структуру данных на выходе
-def get():
-    return
-
-def logic():
-    return
-
-def send():
-    return
+#def get():
 
 
+#def logic():
+
+
+#def send():
 
 
 
@@ -127,22 +180,7 @@ def send():
 conn = sqlite3.connect('obrashcheniya.db')
 cursor = conn.cursor()
 
-# Создание таблицы с полями
 
-
-
-# Функция для автоматического вычисления дат
-def calculate_date(data, days):
-    return (datetime.strptime(data, '%Y-%m-%d %H:%M:%S') + timedelta(days)).strftime('%Y-%m-%d %H:%M:%S')
-
-
-# Добавление тестовых данных (можно закомментировать после тестирования)
-cursor.execute('''INSERT INTO obrazheniya (nomer_obrashcheniya, data_perevoda_na_3LTP, data_vzyatiya_v_rabotu, 
-                data_pereotkrytiya, ssylka_na_obrashcheniye, otvetstvenny, soderzhaniye_obrashcheniya, 
-                servis, prioritet)
-                VALUES ('123456', '2024-02-23 12:00:00', 
-                '2024-02-23 13:00:00', '2024-02-24 10:00:00', 'example.com', 
-                'Иванов Иван', 'Содержание обращения', 'Сервис A', 'Высокий')''')
 
 # Сохранение изменений и закрытие соединения
 conn.commit()
@@ -229,7 +267,7 @@ def check_deadlines():
 # Проверяем обращения с крайним сроком на сегодня и обращения, срок которых уже прошел
 # Отправляем уведомления о подходящих обращениях
 
-def upload_list(update, context):
+#def upload_list(update, context):
     # Получаем файл от пользователя
     file = context.bot.get_file(update.message.document.file_id)
     file_bytes = file.download_as_bytearray()
@@ -250,7 +288,7 @@ def upload_list(update, context):
 
         context.bot.send_message(chat_id=update.effective_chat.id, text="Список успешно загружен из Excel файла 📂📊")
     else:
-        context.bot.send_message(chat_id=update.effective_chat.id, text="Пожалуйста, загрузите файл в формате xlsx 📑❌")
+        context.bot.send_message(chat_id=update.effective_chat.id, text="АЛЕ, загрузите файл в формате xlsx 📑❌")
 
 
 # Обработчик команды "/download_list" для вывода списка обращений
@@ -266,20 +304,9 @@ def check_deadlines_command(update, context):
     # Проверяем крайние сроки обращений
     check_deadlines()
 
-def get_notification():
-    pass
 
-def task_distribution(task_list, data_base_project_manager):
-    notification = get_notification()
-    for task in task_list:
-        for user in data_base_project_manager:
-            if task['RESPONSIBLE_ID'] == user['ID']:
-                if task['Notification'] == True:
-                    message = "Пользователь с ID {user['ID']} должен выполнить задачу и уже оповещен"
-                else:
-                    message = "Пользователь с ID {user['ID']} должен выполнить задачу и ему необходимо отправить уведомление"
-                break
-    return
+ # Квартыч
 
-def bot_send_message(message):
-    pass
+
+
+
