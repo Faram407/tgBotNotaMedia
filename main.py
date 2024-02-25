@@ -2,14 +2,14 @@ import telebot
 import sqlite3
 import pandas as pd
 import os
-import random # Для тестов, Денис
+import random  # Для тестов, Денис
 
-data_base_project_manager = [{"ID": 4805, "ProjectName": "@nastasia_project"}, # Данные по Проджект менеджерам
+
+data_base_project_manager = [{"ID": 4805, "ProjectName": "@nastasia_project"},  # Данные по Проджект менеджерам
                              {"ID": 4609, "ProjectName": "@anatoliyavd"},
                              {"ID": 4368, "ProjectName": "@avetiss"},
                              {"ID": 5641, "ProjectName": "@exxxlight"}
                              ]
-
 
 BotKey = "7160129906:AAHBQbCiCtuqeTeCHjzWFnaI7OKbsqkwo8k"  # Замените на ваш ключ бота
 
@@ -17,8 +17,6 @@ BotKey = "7160129906:AAHBQbCiCtuqeTeCHjzWFnaI7OKbsqkwo8k"  # Замените н
 bot = telebot.TeleBot(BotKey)
 
 DB_FILE = 'database.sql'
-
-
 
 # Проверка существования базы данных
 if not os.path.exists(DB_FILE):
@@ -49,14 +47,14 @@ if not os.path.exists(DB_FILE):
     conn.close()
 
 
-
-
 # Обработчик команды "start"
 @bot.message_handler(commands=['start'])
 def start(message):
     bot.send_message(message.chat.id, 'Привет, сейчас загрузим обращения!')
     bot.register_next_step_handler(message, handle_document)
-#test
+
+
+# test
 # Обработчик документов
 def handle_document(message):
     if message.document is not None and message.document.file_name.endswith('.xlsx'):
@@ -80,6 +78,7 @@ def handle_document(message):
     else:
         bot.send_message(message.chat.id, 'Пожалуйста, отправьте файл в формате XLSX.')
 
+
 # Обработчик команды "query"
 @bot.message_handler(commands=['query'])
 def handle_query(message):
@@ -101,29 +100,34 @@ def handle_query(message):
     cur.close()
     conn.close()
 
- # Квартыч
 
-def append_Notification_and_RESPONSIBLE(row):     # ДЛЯ ТЕСТА Добавляем в список 2 поля , Responsible_ID и Notification
+# Квартыч
+
+def append_Notification_and_RESPONSIBLE(row):  # ДЛЯ ТЕСТА Добавляем в список 2 поля , Responsible_ID и Notification
     responsible_ID_list = [4805, 4609, 4368, 4368]
     notification_list = [True, False]
     row.append(random.choice(responsible_ID_list))
     row.append(random.choice(notification_list))
     return row
 
-def dict_create_from_list(row):                              # Преобразуем список в словарь
+
+def dict_create_from_list(row):  # Преобразуем список в словарь
     row = append_Notification_and_RESPONSIBLE(row)
-    keys = ["task_url", "task_number","date_start", "date_take", "objective","status", "applicant_name", "date,end", "RESPONSIBLE_ID", "Notification"]
+    keys = ["task_url", "task_number", "date_start", "date_take", "objective", "status", "applicant_name", "date,end",
+            "RESPONSIBLE_ID", "Notification"]
     task_dictionary = dict(zip(keys, row))
     return task_distribution(task_dictionary, data_base_project_manager)
 
-def get_notification(task_dictionary):            # Смотрим Отправляли ли мы уже сообщение.
+
+def get_notification(task_dictionary):  # Смотрим Отправляли ли мы уже сообщение.
     if task_dictionary["Notification"] == True:
         return True
     else:
         return False
 
 
-def task_distribution(task_dictionary, data_base_project_manager): # Проверяем ответственного по задаче, Формируем сообщение.
+def task_distribution(task_dictionary,
+                      data_base_project_manager):  # Проверяем ответственного по задаче, Формируем сообщение.
 
     for user in data_base_project_manager:
 
@@ -135,12 +139,13 @@ def task_distribution(task_dictionary, data_base_project_manager): # Прове�
             else:
 
                 message_for_project = user[
-                    'ProjectName'] + " прошу взять задачу " + \
-                          task_dictionary["task_number"] + " в работу \n" + task_dictionary["task_url"]
+                                          'ProjectName'] + " прошу взять задачу " + \
+                                      task_dictionary["task_number"] + " в работу \n" + task_dictionary["task_url"]
             break
     return message_for_project
 
- # Квартыч
+
+# Квартыч
 
 
 # Запуск обработки сообщений бота
@@ -162,25 +167,22 @@ def handle_remind(message):
 updater.start_polling()
 updater.idle()
 
-#Вызвать битру
+# Вызвать битру
 
 # Достать из excel
 # продумать структуру данных на выходе
-#def get():
+# def get():
 
 
-#def logic():
+# def logic():
 
 
-#def send():
-
+# def send():
 
 
 # Подключение к базе данных SQLite
 conn = sqlite3.connect('obrashcheniya.db')
 cursor = conn.cursor()
-
-
 
 # Сохранение изменений и закрытие соединения
 conn.commit()
@@ -262,12 +264,10 @@ for case in cases_list:
 
 # Функция для проверки крайнего срока обращений и отправки уведомлений
 def check_deadlines():
+    # Проверяем обращения с крайним сроком на сегодня и обращения, срок которых уже прошел
+    # Отправляем уведомления о подходящих обращениях
 
-
-# Проверяем обращения с крайним сроком на сегодня и обращения, срок которых уже прошел
-# Отправляем уведомления о подходящих обращениях
-
-#def upload_list(update, context):
+    # def upload_list(update, context):
     # Получаем файл от пользователя
     file = context.bot.get_file(update.message.document.file_id)
     file_bytes = file.download_as_bytearray()
@@ -305,7 +305,11 @@ def check_deadlines_command(update, context):
     check_deadlines()
 
 
- # Квартыч
+# Квартыч
+
+
+
+
 
 
 
